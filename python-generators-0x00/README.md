@@ -18,3 +18,10 @@ Create a Python script that connects to a MySQL database, sets up the required s
 ## How to Run
 ```bash
 $ python3 0-main.py
+
+
+You should see output similar to:
+connection successful
+Table user_data created successfully
+Database ALX_prodev is present
+[('UUID1', 'John Doe', 'john@example.com', 30), ...]
