@@ -1,33 +1,57 @@
-
-3. Using Decorators to retry database queries
-mandatory
-Objective: create a decorator that retries database operations if they fail due to transient errors
-
-Instructions:
-
-Complete the script below by implementing a retry_on_failure(retries=3, delay=2) decorator that retries the function of a certain number of times if it raises an exception
+#!/usr/bin/python3
 import time
-import sqlite3 
+import sqlite3
 import functools
 
-#### paste your with_db_decorator here
 
-""" your code goes here"""
+def with_db_connection(func):
+    """Decorator that opens a DB connection, passes it to the function, and closes it afterward."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        conn = sqlite3.connect('users.db')
+        try:
+            result = func(conn, *args, **kwargs)
+        finally:
+            conn.close()
+        return result
+    return wrapper
+
+
+def retry_on_failure(retries=3, delay=2):
+    """Decorator that retries a function if it fails due to an exception."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            attempt = 0
+            while attempt < retries:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    attempt += 1
+                    print(f"Attempt {attempt} failed due to error: {e}")
+                    if attempt < retries:
+                        print(f"Retrying in {delay} seconds...")
+                        time.sleep(delay)
+                    else:
+                        print("All retry attempts failed.")
+                        raise
+        return wrapper
+    return decorator
+
 
 @with_db_connection
 @retry_on_failure(retries=3, delay=1)
-
 def fetch_users_with_retry(conn):
-cursor = conn.cursor()
-cursor.execute("SELECT * FROM users")
-return cursor.fetchall()
+    """Fetch all users, retrying if transient errors occur."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users")
+    return cursor.fetchall()
 
-#### attempt to fetch users with automatic retry on failure
 
-users = fetch_users_with_retry()
-print(users)
-Repo:
-
-GitHub repository: alx-backend-python
-Directory: python-decorators-0x01
-File: 3-retry_on_failure.py
+# ✅ Attempt to fetch users with automatic retry on failure
+if __name__ == "__main__":
+    try:
+        users = fetch_users_with_retry()
+        print(users)
+    except Exception as e:
+        print(f"Final error after retries: {e}")
