@@ -1,4 +1,4 @@
-from django.db import models
+#from django.db import models
 
 # Create your models here.
 import uuid
@@ -85,4 +85,5 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender.email} at {self.sent_at}"
+
 
