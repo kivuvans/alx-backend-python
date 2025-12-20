@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "Starting Kubernetes cluster verification..."
+echo ""
+
+# Check kubectl
+if ! command -v kubectl &> /dev/null; then
+    echo "ERROR: kubectl not found"
+    exit 1
+fi
+
+# Cluster info
+echo "=== Cluster Info ==="
+kubectl cluster-info
+
+echo ""
+echo "=== Available Pods ==="
+kubectl get pods --all-namespaces
+
+echo ""
+echo "=== Nodes ==="
+kubectl get nodes
+
+echo ""
+echo "Kubernetes cluster is running!"
