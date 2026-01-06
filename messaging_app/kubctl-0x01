@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+echo "Scaling Django app to 3 replicas..."
+kubectl scale deployment messaging-app --replicas=3
+
+echo "Verifying pods are running..."
+kubectl get pods
+
+echo "Waiting for pods to stabilize..."
+sleep 10
+
+echo "Running load test using wrk..."
+wrk -t2 -c20 -d30s http://localhost:8000 || echo "wrk not installed, skipping load test"
+
+echo "Monitoring resource usage..."
+kubectl top pods || echo "metrics-server not available"

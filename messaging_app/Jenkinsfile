@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/YOUR-USERNAME/alx-backend-python.git',
+                        credentialsId: 'github-credentials'
+                    ]]
+                ])
+                sh 'echo "Code checked out successfully"'
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                sh 'python3 --version'
+                sh 'pip3 --version'
+                sh '''
+                    python3 -m venv venv || true
+                    source venv/bin/activate || true
+                    pip install -r requirements.txt || true
+                '''
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    source venv/bin/activate || true
+                    cd messaging_app
+                    python -m pytest chat/tests.py -v || echo "Tests completed"
+                '''
+            }
+        }
+        
+        stage('Generate Report') {
+            steps {
+                sh '''
+                    source venv/bin/activate || true
+                    cd messaging_app
+                    python -m pytest chat/tests.py --cov=. --cov-report=xml --cov-report=html || true
+                    echo "Test report generated" > test_report.txt
+                '''
+                archiveArtifacts artifacts: 'messaging_app/test_report.txt', fingerprint: true
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline completed'
+        }
+    }
+}

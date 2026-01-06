@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Start Minikube cluster
+echo "Starting Kubernetes cluster..."
+minikube start
+
+# Verify cluster
+echo "Verifying cluster info..."
+kubectl cluster-info
+
+# List all pods
+echo "Listing pods..."
+kubectl get pods -A
