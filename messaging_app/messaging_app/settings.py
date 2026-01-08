@@ -88,3 +88,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Custom user model
 AUTH_USER_MODEL = 'chats.User'
+
+
