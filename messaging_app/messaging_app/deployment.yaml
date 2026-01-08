@@ -1,9 +1,16 @@
+# deployment.yaml
+# Kubernetes Deployment and Service for Django Messaging App
+
+---
+# Deployment Configuration
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: messaging-app
+  name: messaging-app-deployment
+  labels:
+    app: messaging-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: messaging-app
@@ -13,23 +20,65 @@ spec:
         app: messaging-app
     spec:
       containers:
-        - name: django-app
-          image: kivuvans/messaging_app:1.0
-          ports:
-            - containerPort: 8000
-          env:
-            - name: DJANGO_SETTINGS_MODULE
-              value: messaging_app.settings
+      - name: messaging-app
+        image: messaging-app:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: DEBUG
+          value: "False"
+        - name: SECRET_KEY
+          value: "django-insecure-k8s-deployment-key"
+        - name: DB_HOST
+          value: "localhost"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          value: "messaging_db"
+        - name: DB_USER
+          value: "messaging_user"
+        - name: DB_PASSWORD
+          value: "password123"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /admin/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /admin/
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
 ---
+# Service Configuration (ClusterIP)
 apiVersion: v1
 kind: Service
 metadata:
   name: messaging-app-service
+  labels:
+    app: messaging-app
 spec:
   type: ClusterIP
   selector:
     app: messaging-app
   ports:
-    - protocol: TCP
-      port: 8000
-      targetPort: 8000
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+    name: http
